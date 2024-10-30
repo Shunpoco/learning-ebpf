@@ -6,6 +6,34 @@
 #include "hello.h"
 #include "hello.skel.h"
 
+enum Program {
+	KPROBE_SYS_EXECVE,
+	KPROBE_DO_EXECVE,
+	TP_SYS_ENTER_EXECVE,
+	TP_BTF_EXEC,
+	RAW_TP_EXEC,
+};
+
+// Choose program choses a specific program.
+static int choose_program(struct hello_bpf *obj, int idx)
+{
+	struct bpf_prog_skeleton *progs;
+
+	progs = (struct bpf_prog_skeleton *)calloc(1, sizeof(*progs));
+	if (!progs) {
+		return -ENOMEM;
+	}
+
+	progs[0].name = obj->skeleton->progs[idx].name;
+	progs[0].prog = obj->skeleton->progs[idx].prog;
+	progs[0].link = obj->skeleton->progs[idx].link;
+
+	obj->skeleton->prog_cnt = 1;
+	obj->skeleton->progs = progs;
+
+	return 0;
+}
+
 static int libbpf_print_fn(enum libbpf_print_level level, const char *format, va_list args)
 {
 	if (level >= LIBBPF_DEBUG)
@@ -45,6 +73,14 @@ int main()
 	skel = hello_bpf__open_opts(&opts);
 	if (!skel) {
 		printf("Failed to open BPF object\n");
+		return 1;
+	}
+
+	err = choose_program(skel, KPROBE_SYS_EXECVE);
+	if (err) {
+		printf("Failed to choose program\n");
+		hello_bpf__destroy(skel);
+
 		return 1;
 	}
 
