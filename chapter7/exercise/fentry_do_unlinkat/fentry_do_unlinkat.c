@@ -1,7 +1,21 @@
 #include <stdio.h>
+#include <unistd.h>
 #include <signal.h>
 #include <bpf/libbpf.h>
 #include "fentry_do_unlinkat.skel.h"
+
+struct event {
+  int pid;
+  char name[64];
+};
+
+int handle_event(void *ctx, void *data, size_t size) {
+  struct event *event = data;
+
+  printf("%d, %s\n", event->pid, event->name);
+
+  return 0;
+}
 
 volatile sig_atomic_t stop;
 
@@ -48,8 +62,19 @@ int main()
     return 1;
   }
 
+  struct ring_buffer *rb = NULL;
+  rb = ring_buffer__new(bpf_map__fd(skel->maps.ring_buffer), handle_event, NULL, NULL);
+  if (!rb) {
+    printf("Failed to initialize ring buffer\n");
+    fentry_do_unlinkat_bpf__destroy(skel);
+
+    return 1;
+  }
   
-  while (!stop) {}
+  while (!stop) {
+    ring_buffer__poll(rb, 100);
+    sleep(1);
+  }
 
   fentry_do_unlinkat_bpf__destroy(skel);
   return 0;

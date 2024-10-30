@@ -10,8 +10,6 @@ struct event {
   char path[64];
 };
 
-typedef int (*ring_buffer_sample_fn)(void *ctx, void *data, size_t size);
-
 int handle_event(void *ctx, void *data, size_t size) {
   struct event *event = data;
 
