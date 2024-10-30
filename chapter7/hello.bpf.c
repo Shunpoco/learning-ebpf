@@ -42,7 +42,7 @@ int BPF_KPROBE_SYSCALL(kprobe_sys_execve, const char *pathname)
 
 // TODO!! Work on ARM
 #ifndef __TARGET_ARCH_arm64
-SEC("kprobe/do_execve")
+SEC("kprobe/do_execveat_common")
 int BPF_KPROBE(kprobe_do_execve, struct filename *filename) {
    struct data_t data = {}; 
 
@@ -64,7 +64,7 @@ int BPF_KPROBE(kprobe_do_execve, struct filename *filename) {
 
 // This should really look at the kernel version, because fentry is supported on
 // ARM from Linux 6.0 onwards
-#ifndef __TARGET_ARCH_arm64
+/* #ifndef __TARGET_ARCH_arm64
 SEC("fentry/do_execve")
 int BPF_PROG(fentry_execve, struct filename *filename) {
    struct data_t data = {}; 
@@ -84,7 +84,7 @@ int BPF_PROG(fentry_execve, struct filename *filename) {
    return 0;   
 }
 #endif
-
+ */
 // name: sys_enter_execve
 // ID: 622
 // format:
